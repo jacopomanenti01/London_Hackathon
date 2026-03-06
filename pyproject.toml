@@ -1,0 +1,18 @@
+[project]
+name = "hackathon"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=1.2.10",
+    "langchain-community>=0.4.1",
+    "langchain-ollama>=1.0.1",
+    "pypdf>=6.7.5",
+    "surrealdb>=1.0.8",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+]
