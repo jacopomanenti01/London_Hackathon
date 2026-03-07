@@ -1,0 +1,26 @@
+# Retrieval profile: keyword_only
+# Baseline strategy — simple text search against stored evidence.
+# Good for: quick lookups, evaluation baseline, low-latency queries.
+
+profile_id: keyword_only
+name: Keyword Only
+description: >
+  Text-based keyword retrieval against indexed evidence and claims.
+  No graph expansion or vector search. Useful as a baseline for
+  comparing more advanced retrieval strategies.
+
+retrievers:
+  - type: keyword
+    weight: 1.0
+    top_k: 15
+
+graph_expansion:
+  enabled: false
+  depth: 0
+
+reranking:
+  enabled: false
+
+contradiction_handling: none
+context_packing: truncate_by_score
+max_context_tokens: 6000

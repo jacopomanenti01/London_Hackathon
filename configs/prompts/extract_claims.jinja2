@@ -1,0 +1,37 @@
+You are extracting structured due diligence claims about the company at {{ company_host }}.
+
+## Active Schema Sections
+{% for section in schema_sections %}
+- {{ section.id }}: {{ section.title }}
+  {% for field in section.fields %}
+  - {{ field.id }} ({{ field.data_type }}){% if field.required %} [REQUIRED]{% endif %}
+  {% endfor %}
+{% endfor %}
+
+## Evidence to Process
+{% for evidence in evidence_items %}
+### Evidence {{ loop.index }} ({{ evidence.provider }})
+Source: {{ evidence.source_url | default('unknown') }}
+{{ evidence.excerpt }}
+{% endfor %}
+
+## Instructions
+Extract specific factual claims from the evidence above. For each claim:
+1. Map it to the correct schema section and field
+2. Extract the exact claim value
+3. Rate confidence (0.0-1.0) based on source quality and specificity
+4. Note if the claim contradicts any other evidence
+
+Return a JSON array:
+[
+  {
+    "section_id": "...",
+    "field_id": "...",
+    "value": "...",
+    "confidence": 0.8,
+    "value_type": "string",
+    "source_index": 1
+  }
+]
+
+Return ONLY the JSON array.

@@ -1,0 +1,30 @@
+You are synthesizing the "{{ section.title }}" section of a due diligence profile for {{ company_host }}.
+
+## Section Schema
+{% for field in section.fields %}
+- {{ field.id }}: {{ field.data_type }}{% if field.required %} [REQUIRED]{% endif %}
+  {% if field.description %}Description: {{ field.description }}{% endif %}
+{% endfor %}
+
+## Available Claims
+{% for claim in claims %}
+- {{ claim.field_id }}: {{ claim.value }} (confidence: {{ claim.confidence }})
+{% endfor %}
+
+## Instructions
+1. Synthesize each field using the available claims
+2. If multiple claims exist for a field, select the most confident or merge them
+3. If no claims exist, set the field to null
+4. Note any contradictions
+5. Include metadata about evidence quality
+
+Return a JSON object with the section fields populated:
+{
+  {% for field in section.fields %}
+  "{{ field.id }}": {
+    "value": "...",
+    "confidence": 0.8,
+    "sources": ["claim references"]
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+}

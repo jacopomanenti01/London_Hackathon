@@ -1,0 +1,193 @@
+schema_id: due_diligence_v1
+version: 1
+is_active: true
+notes: "Default due diligence profile schema for supply-chain risk analysis"
+
+sections:
+  - id: company_identity
+    title: Company Identity
+    required: true
+    freshness_days: 180
+    retrieval_hints:
+      preferred_sources: [tavily, serpapi, apify]
+      graph_entities: [company, domain]
+    fields:
+      - id: legal_name
+        type: string
+        required: true
+        ttl_days: 180
+      - id: trade_names
+        type: list[string]
+        required: false
+        ttl_days: 180
+      - id: headquarters
+        type: object
+        required: false
+        ttl_days: 180
+      - id: incorporation_country
+        type: string
+        required: false
+        ttl_days: 365
+      - id: founded_year
+        type: integer
+        required: false
+        ttl_days: 365
+      - id: employee_estimate
+        type: string
+        required: false
+        ttl_days: 90
+      - id: company_description
+        type: string
+        required: false
+        ttl_days: 90
+
+  - id: ownership_and_structure
+    title: Ownership and Structure
+    required: false
+    freshness_days: 180
+    retrieval_hints:
+      preferred_sources: [serpapi, tavily]
+      graph_entities: [company]
+    fields:
+      - id: parent_company
+        type: string
+        required: false
+        ttl_days: 180
+      - id: subsidiaries
+        type: list[string]
+        required: false
+        ttl_days: 180
+      - id: beneficial_ownership_notes
+        type: string
+        required: false
+        ttl_days: 180
+      - id: public_or_private
+        type: string
+        required: false
+        ttl_days: 90
+
+  - id: operations_and_supply_chain
+    title: Operations and Supply Chain
+    required: false
+    freshness_days: 90
+    retrieval_hints:
+      preferred_sources: [tavily, serpapi]
+      graph_entities: [company]
+    fields:
+      - id: industry
+        type: list[string]
+        required: false
+        ttl_days: 180
+      - id: products_services
+        type: list[string]
+        required: false
+        ttl_days: 90
+      - id: operating_countries
+        type: list[string]
+        required: false
+        ttl_days: 90
+      - id: manufacturing_presence
+        type: string
+        required: false
+        ttl_days: 90
+      - id: key_supply_chain_notes
+        type: string
+        required: false
+        ttl_days: 90
+
+  - id: compliance_and_risk
+    title: Compliance and Risk
+    required: true
+    freshness_days: 30
+    retrieval_hints:
+      preferred_sources: [tavily, serpapi]
+      graph_entities: [company, risk_signal]
+    fields:
+      - id: sanctions_exposure
+        type: string
+        required: false
+        ttl_days: 30
+      - id: adverse_media_summary
+        type: string
+        required: false
+        ttl_days: 30
+      - id: litigation_summary
+        type: string
+        required: false
+        ttl_days: 30
+      - id: regulatory_flags
+        type: list[string]
+        required: false
+        ttl_days: 30
+      - id: corruption_or_bribery_signals
+        type: string
+        required: false
+        ttl_days: 30
+
+  - id: esg_and_certifications
+    title: ESG and Certifications
+    required: false
+    freshness_days: 90
+    retrieval_hints:
+      preferred_sources: [tavily, apify]
+      graph_entities: [company]
+    fields:
+      - id: sustainability_commitments
+        type: string
+        required: false
+        ttl_days: 90
+      - id: certifications
+        type: list[string]
+        required: false
+        ttl_days: 90
+      - id: human_rights_policy
+        type: string
+        required: false
+        ttl_days: 90
+      - id: environmental_policy
+        type: string
+        required: false
+        ttl_days: 90
+
+  - id: financial_health
+    title: Financial Health
+    required: false
+    freshness_days: 90
+    retrieval_hints:
+      preferred_sources: [serpapi, tavily]
+      graph_entities: [company]
+    fields:
+      - id: revenue_estimate
+        type: string
+        required: false
+        ttl_days: 90
+      - id: funding_or_listing_status
+        type: string
+        required: false
+        ttl_days: 90
+      - id: insolvency_or_distress_signals
+        type: string
+        required: false
+        ttl_days: 30
+
+  - id: profile_meta
+    title: Profile Metadata
+    required: true
+    freshness_days: 1
+    fields:
+      - id: confidence_summary
+        type: string
+        required: true
+        ttl_days: 1
+      - id: evidence_coverage_score
+        type: float
+        required: true
+        ttl_days: 1
+      - id: last_full_refresh_at
+        type: datetime
+        required: true
+        ttl_days: 1
+      - id: open_questions
+        type: list[string]
+        required: false
+        ttl_days: 1
