@@ -19,3 +19,8 @@ def chat(message: str) -> str:
         HumanMessage(content=message),
     ])
     return response.content
+
+
+if __name__ == "__main__":
+    response = chat("Apple relies on TSMC for chip manufacturing.")
+    print(f"This is the response: {response}")

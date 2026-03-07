@@ -459,6 +459,7 @@ dependencies = [
     { name = "langchain-community" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
+    { name = "langsmith" },
     { name = "pypdf" },
     { name = "surrealdb" },
 ]
@@ -475,6 +476,7 @@ requires-dist = [
     { name = "langchain-community", specifier = ">=0.4.1" },
     { name = "langchain-ollama", specifier = ">=1.0.1" },
     { name = "langchain-openai", specifier = ">=1.1.10" },
+    { name = "langsmith", specifier = ">=0.7.13" },
     { name = "pypdf", specifier = ">=6.7.5" },
     { name = "surrealdb", specifier = ">=1.0.8" },
 ]
