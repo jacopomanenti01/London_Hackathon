@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     )
 
     # Application
-    app_name: str = Field(default="DD Platform", description="Application name")
+    app_name: str = Field(default="GeniTrace", description="Application name")
     app_version: str = Field(default="0.1.0", description="Application version")
     debug: bool = Field(default=False, description="Debug mode")
     log_level: str = Field(default="INFO", description="Log level")

@@ -39,7 +39,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="Company Due Diligence Agent Platform",
+        title="GenieTrace Platform",
         description=(
             "AI-powered platform for building, updating, and chatting with "
             "company due diligence profiles. Uses GraphRAG retrieval and "
