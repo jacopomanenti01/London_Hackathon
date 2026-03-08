@@ -18,16 +18,34 @@ logger = get_logger(__name__)
 
 
 def _company_id_aliases(company_id: str) -> list[str]:
-    """Return normalized company ID plus simple www/non-www aliases."""
-    canonical = normalize_company_id(company_id)
-    host = canonical.split(":", 1)[1] if ":" in canonical else canonical
-    aliases = [canonical]
+    """Return company ID aliases across underscore/dot and www/non-www forms."""
+    raw = company_id.strip().strip("'\"").lower()
+    if not raw:
+        return []
 
-    if host.startswith("www_"):
-        aliases.append(f"company:{host[4:]}")
+    if raw.startswith("company:"):
+        host_raw = raw.split(":", 1)[1].strip()
     else:
-        aliases.append(f"company:www_{host}")
+        host_raw = raw
 
+    host_underscore = host_raw.replace(".", "_")
+    host_dot = host_raw.replace("_", ".")
+
+    variants = {
+        host_underscore,
+        host_dot,
+    }
+    if host_underscore.startswith("www_"):
+        variants.add(host_underscore[4:])
+    else:
+        variants.add(f"www_{host_underscore}")
+    if host_dot.startswith("www."):
+        variants.add(host_dot[4:])
+    else:
+        variants.add(f"www.{host_dot}")
+
+    aliases = [f"company:{v}" for v in variants if v]
+    aliases.append(normalize_company_id(company_id))
     return list(dict.fromkeys(aliases))
 
 
@@ -426,15 +444,65 @@ async def get_evidence(
     Supports filtering by section_id, field_id, and limit.
     """
     deps = request.app.state.deps
-    normalized_company_id = await _resolve_company_id(company_id, deps)
-    evidence = await deps.evidence_repo.find_by_company(
-        company_id=normalized_company_id,
+    normalized_company_id = normalize_company_id(company_id)
+    candidate_ids = _company_id_aliases(normalized_company_id)
+    logger.info(
+        "evidence_route_start",
+        input_company_id=company_id,
+        normalized_company_id=normalized_company_id,
+        candidate_ids=candidate_ids,
         section_id=section_id,
         field_id=field_id,
         limit=limit,
     )
+
+    merged: list[Any] = []
+    seen_ids: set[str] = set()
+    for cid in candidate_ids:
+        try:
+            rows = await deps.evidence_repo.find_by_company(
+                company_id=cid,
+                section_id=section_id,
+                field_id=field_id,
+                limit=limit,
+            )
+            logger.info(
+                "evidence_route_alias_result",
+                candidate_company_id=cid,
+                rows=len(rows),
+            )
+        except Exception as e:
+            logger.error(
+                "evidence_route_alias_failed",
+                candidate_company_id=cid,
+                error=str(e),
+            )
+            continue
+        for row in rows:
+            rid = row.id or ""
+            if rid and rid in seen_ids:
+                continue
+            if rid:
+                seen_ids.add(rid)
+            merged.append(row)
+
+    # Keep most recent first and respect limit after merge.
+    merged.sort(key=lambda e: e.retrieved_at, reverse=True)
+    evidence = merged[:limit]
+
+    # Prefer alias that actually returned data, else normalized input.
+    resolved_company_id = next(
+        (cid for cid in candidate_ids if any(e.company_id == cid for e in evidence)),
+        normalized_company_id,
+    )
+    logger.info(
+        "evidence_route_done",
+        resolved_company_id=resolved_company_id,
+        merged_count=len(merged),
+        returned_count=len(evidence),
+    )
     return {
-        "company_id": normalized_company_id,
+        "company_id": resolved_company_id,
         "evidence": [e.model_dump(mode="json") for e in evidence],
         "count": len(evidence),
     }

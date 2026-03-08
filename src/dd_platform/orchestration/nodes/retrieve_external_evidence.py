@@ -32,7 +32,8 @@ async def retrieve_external_evidence(
 
     all_sources: list[dict[str, Any]] = []
     all_evidence: list[dict[str, Any]] = []
-    seen_urls: set[str] = set()
+    seen_new_source_urls: set[str] = set()
+    seen_evidence_keys: set[str] = set()
     skipped_existing = 0
     tool_failures: list[dict[str, str]] = []
     warnings = list(state.warnings)
@@ -79,30 +80,39 @@ async def retrieve_external_evidence(
 
                 for result in output.results:
                     url_key = result.url.lower().rstrip("/")
-                    if url_key in seen_urls or url_key in known_urls:
+                    if url_key not in known_urls and url_key not in seen_new_source_urls:
+                        source = {
+                            "company_id": state.company_id,
+                            "url": result.url,
+                            "title": result.title,
+                            "provider": result.provider,
+                            "source_type": result.source_type,
+                            "content_text": result.content_text or result.snippet,
+                            "content_hash": content_hash(result.snippet),
+                            "retrieved_at": result.retrieved_at.isoformat(),
+                        }
+                        all_sources.append(source)
+                        seen_new_source_urls.add(url_key)
+                        known_urls.add(url_key)
+                    elif url_key in known_urls:
                         skipped_existing += 1
-                        continue
-                    seen_urls.add(url_key)
-                    known_urls.add(url_key)
-
-                    source = {
-                        "company_id": state.company_id,
-                        "url": result.url,
-                        "title": result.title,
-                        "provider": result.provider,
-                        "source_type": result.source_type,
-                        "content_text": result.content_text or result.snippet,
-                        "content_hash": content_hash(result.snippet),
-                        "retrieved_at": result.retrieved_at.isoformat(),
-                    }
-                    all_sources.append(source)
 
                     # Create evidence fragments
+                    excerpt = (result.snippet or "").strip()
+                    if not excerpt:
+                        continue
+                    evidence_key = (
+                        f"{url_key}|{plan_item.section_id}|{content_hash(excerpt)}"
+                    )
+                    if evidence_key in seen_evidence_keys:
+                        continue
+                    seen_evidence_keys.add(evidence_key)
+
                     evidence = {
                         "company_id": state.company_id,
                         "source_url": result.url,
                         "section_id": plan_item.section_id,
-                        "excerpt": result.snippet,
+                        "excerpt": excerpt,
                         "content_text": result.content_text,
                         "provider": result.provider,
                         "confidence": 0.5,

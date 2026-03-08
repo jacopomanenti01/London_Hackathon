@@ -19,6 +19,11 @@ from ..state import BuildProfileState, FreshnessAssessment, WorkflowStage
 logger = get_logger(__name__)
 
 
+def _url_key(url: str | None) -> str:
+    """Normalize URL for stable matching between sources and evidence."""
+    return (url or "").strip().lower().rstrip("/")
+
+
 async def persist_snapshot(
     state: BuildProfileState,
     profile_repo: ProfileRepository,
@@ -33,13 +38,20 @@ async def persist_snapshot(
     """
     logger.info("node_persist_snapshot", company_id=state.company_id)
 
-    # 1. Persist new sources and evidence
+    # 1. Persist sources
     persisted_sources = 0
     persisted_evidence = 0
     persisted_claims = 0
     persist_errors = 0
+    existing_sources = await evidence_repo.find_sources_by_company(state.company_id, limit=5000)
+    source_id_by_url = {_url_key(s.url): s.id for s in existing_sources if s.id and s.url}
+
     for source_data in state.new_sources:
         try:
+            normalized_source_url = _url_key(source_data.get("url"))
+            if normalized_source_url in source_id_by_url:
+                continue
+
             source = SourceDocument(
                 company_id=source_data["company_id"],
                 url=source_data["url"],
@@ -49,26 +61,40 @@ async def persist_snapshot(
                 content_hash=source_data.get("content_hash"),
             )
             source_id = await evidence_repo.create_source(source)
+            source_id_by_url[normalized_source_url] = source_id
             persisted_sources += 1
-
-            # Persist associated evidence
-            for ev_data in state.new_evidence:
-                if ev_data.get("source_url") == source_data["url"]:
-                    evidence = Evidence(
-                        company_id=ev_data["company_id"],
-                        source_document_id=source_id,
-                        section_id=ev_data.get("section_id"),
-                        excerpt=ev_data.get("excerpt", ""),
-                        confidence=ev_data.get("confidence", 0.5),
-                    )
-                    await evidence_repo.create_evidence(evidence, source_id)
-                    persisted_evidence += 1
 
         except Exception as e:
             persist_errors += 1
             logger.warning("persist_source_failed", error=str(e), url=source_data.get("url"))
 
-    # 2. Persist extracted claims
+    # 2. Persist evidence (including fragments from existing sources)
+    for ev_data in state.new_evidence:
+        try:
+            source_id = source_id_by_url.get(_url_key(ev_data.get("source_url")))
+            if not source_id:
+                persist_errors += 1
+                logger.warning(
+                    "persist_evidence_missing_source",
+                    source_url=ev_data.get("source_url"),
+                    section_id=ev_data.get("section_id"),
+                )
+                continue
+
+            evidence = Evidence(
+                company_id=ev_data["company_id"],
+                source_document_id=source_id,
+                section_id=ev_data.get("section_id"),
+                excerpt=ev_data.get("excerpt", ""),
+                confidence=ev_data.get("confidence", 0.5),
+            )
+            await evidence_repo.create_evidence(evidence, source_id)
+            persisted_evidence += 1
+        except Exception as e:
+            persist_errors += 1
+            logger.warning("persist_evidence_failed", error=str(e))
+
+    # 3. Persist extracted claims
     for claim_data in state.extracted_claims:
         try:
             claim = Claim(
@@ -86,7 +112,7 @@ async def persist_snapshot(
             persist_errors += 1
             logger.warning("persist_claim_failed", error=str(e))
 
-    # 3. Create profile snapshot
+    # 4. Create profile snapshot
     snapshot_id = None
     if state.publish_snapshot and state.profile_draft:
         sections = []
@@ -112,7 +138,7 @@ async def persist_snapshot(
 
         snapshot_id = await profile_repo.create_snapshot(snapshot, state.run_id)
 
-    # 4. Update run status
+    # 5. Update run status
     if state.run_id:
         await run_repo.update_status(
             state.run_id,
