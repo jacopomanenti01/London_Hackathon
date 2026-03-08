@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...domain.retrieval import RetrievalContext
+from ...domain.retrieval import RetrievalContext, RetrievalResult
 from ...logging import get_logger
+from ...persistence.surreal.repositories.evidence_repo import EvidenceRepository
 from ...retrieval.assembler import ContextAssembler
 from ...retrieval.interfaces import Retriever, RetrievalQuery
 
@@ -23,9 +24,11 @@ class RetrievalService:
         self,
         retriever: Retriever,
         context_assembler: ContextAssembler,
+        evidence_repo: EvidenceRepository | None = None,
     ) -> None:
         self._retriever = retriever
         self._assembler = context_assembler
+        self._evidence_repo = evidence_repo
 
     async def search(
         self,
@@ -56,6 +59,10 @@ class RetrievalService:
         )
 
         results = await self._retriever.retrieve(retrieval_query)
+        if not results and self._evidence_repo:
+            # Resilient fallback: return latest persisted evidence when
+            # retriever strategies produce no candidates.
+            results = await self._fallback_results(company_id, section_ids, top_k, retrieval_profile)
 
         context = self._assembler.assemble(
             company_id=company_id,
@@ -73,3 +80,42 @@ class RetrievalService:
             "sections_covered": context.sections_covered,
             "has_contradictions": context.has_contradictions,
         }
+
+    async def _fallback_results(
+        self,
+        company_id: str,
+        section_ids: list[str] | None,
+        top_k: int,
+        retrieval_profile: str,
+    ) -> list[RetrievalResult]:
+        """Build retrieval results from persisted evidence as a fallback."""
+        section_filter = section_ids[0] if section_ids else None
+        evidence_rows = await self._evidence_repo.find_by_company(  # type: ignore[union-attr]
+            company_id=company_id,
+            section_id=section_filter,
+            limit=top_k,
+        )
+
+        fallback_results: list[RetrievalResult] = []
+        for idx, ev in enumerate(evidence_rows):
+            fallback_results.append(
+                RetrievalResult(
+                    result_type="evidence",
+                    score=max(0.0, float(ev.confidence or 0.0)),
+                    score_breakdown={"fallback_evidence": 1.0},
+                    text_snippet=ev.excerpt or "",
+                    section_id=ev.section_id,
+                    field_id=ev.field_id,
+                    retrieval_profile=retrieval_profile,
+                    provenance_path=[ev.id or f"fallback_evidence_{idx}"],
+                    metadata={"fallback": True},
+                )
+            )
+
+        logger.info(
+            "retrieval_fallback_used",
+            company_id=company_id,
+            results=len(fallback_results),
+            section_filter=section_filter,
+        )
+        return fallback_results

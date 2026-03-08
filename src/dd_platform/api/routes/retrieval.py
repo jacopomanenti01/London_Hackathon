@@ -7,7 +7,33 @@ from typing import Any
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
+from ...utils.url_normalization import normalize_company_id
+
 router = APIRouter(prefix="/api/v1/retrieval", tags=["retrieval"])
+
+
+def _company_id_aliases(company_id: str) -> list[str]:
+    """Return normalized company ID plus simple www/non-www aliases."""
+    canonical = normalize_company_id(company_id)
+    host = canonical.split(":", 1)[1] if ":" in canonical else canonical
+    aliases = [canonical]
+
+    if host.startswith("www_"):
+        aliases.append(f"company:{host[4:]}")
+    else:
+        aliases.append(f"company:www_{host}")
+
+    # Preserve order while deduplicating.
+    return list(dict.fromkeys(aliases))
+
+
+async def _resolve_company_id(company_id: str, deps: Any) -> str:
+    """Resolve to an existing company ID when possible."""
+    for candidate in _company_id_aliases(company_id):
+        company = await deps.company_repo.find_by_id(candidate)
+        if company:
+            return company.id
+    return normalize_company_id(company_id)
 
 
 class SearchRequest(BaseModel):
@@ -40,8 +66,9 @@ async def retrieval_search(body: SearchRequest, request: Request) -> dict:
     Returns ranked results with provenance and scoring metadata.
     """
     deps = request.app.state.deps
+    normalized_company_id = await _resolve_company_id(body.company_id, deps)
     result = await deps.retrieval_service.search(
-        company_id=body.company_id,
+        company_id=normalized_company_id,
         query=body.query,
         retrieval_profile=body.retrieval_profile,
         section_ids=body.section_ids or None,

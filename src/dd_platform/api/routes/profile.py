@@ -2,14 +2,42 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, Request
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from ...logging import get_logger
+from ...providers.llm.models import LLMMessage, LLMRequest, StructuredLLMRequest
 from ...utils.url_normalization import normalize_company_id
 
 router = APIRouter(prefix="/api/v1/profiles", tags=["profiles"])
+logger = get_logger(__name__)
+
+
+def _company_id_aliases(company_id: str) -> list[str]:
+    """Return normalized company ID plus simple www/non-www aliases."""
+    canonical = normalize_company_id(company_id)
+    host = canonical.split(":", 1)[1] if ":" in canonical else canonical
+    aliases = [canonical]
+
+    if host.startswith("www_"):
+        aliases.append(f"company:{host[4:]}")
+    else:
+        aliases.append(f"company:www_{host}")
+
+    return list(dict.fromkeys(aliases))
+
+
+async def _resolve_company_id(company_id: str, deps: Any) -> str:
+    """Resolve to an existing company ID when possible."""
+    for candidate in _company_id_aliases(company_id):
+        company = await deps.company_repo.find_by_id(candidate)
+        if company:
+            return company.id
+    return normalize_company_id(company_id)
 
 
 class BuildProfileRequest(BaseModel):
@@ -71,6 +99,274 @@ async def build_profile(body: BuildProfileRequest, request: Request) -> dict:
     return result
 
 
+def _extract_profile_sections(profile_json: dict[str, Any]) -> dict[str, Any]:
+    """Normalize profile JSON into a section map."""
+    if not isinstance(profile_json, dict):
+        return {}
+
+    if isinstance(profile_json.get("sections"), dict):
+        return profile_json["sections"]
+
+    return {
+        key: value
+        for key, value in profile_json.items()
+        if key not in {"profile_meta"}
+    }
+
+
+async def _build_profile_report(
+    company_id: str,
+    snapshot: Any,
+    deps: Any,
+) -> dict[str, Any]:
+    """Build an LLM-formatted profile report with section references."""
+    sections = _extract_profile_sections(snapshot.profile_json or {})
+
+    evidence_rows = await deps.evidence_repo.find_by_company(company_id=company_id, limit=300)
+    source_rows = await deps.evidence_repo.find_sources_by_company(company_id=company_id, limit=500)
+
+    source_map: dict[str, dict[str, Any]] = {}
+    for source in source_rows:
+        if source.id:
+            source_map[source.id] = {
+                "url": source.url,
+                "title": source.title,
+                "provider": source.provider,
+            }
+
+    section_references: dict[str, list[dict[str, Any]]] = {}
+    for ev in evidence_rows:
+        sid = ev.section_id or "general"
+        refs = section_references.setdefault(sid, [])
+        source = source_map.get(ev.source_document_id, {})
+        refs.append(
+            {
+                "evidence_id": ev.id,
+                "source_document_id": ev.source_document_id,
+                "url": source.get("url"),
+                "title": source.get("title"),
+                "provider": source.get("provider"),
+                "excerpt": (ev.excerpt or "")[:300],
+                "confidence": ev.confidence,
+            }
+        )
+
+    for sid, refs in section_references.items():
+        section_references[sid] = refs[:8]
+
+    report_schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "company_id": {"type": "string"},
+            "executive_summary": {"type": "string"},
+            "sections": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "section_id": {"type": "string"},
+                        "section_title": {"type": "string"},
+                        "description": {"type": "string"},
+                        "fields": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "field": {"type": "string"},
+                                    "value": {},
+                                    "description": {"type": "string"},
+                                    "references": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "url": {"type": "string"},
+                                                "title": {"type": "string"},
+                                                "source_document_id": {"type": "string"},
+                                                "evidence_excerpt": {"type": "string"},
+                                            },
+                                            "required": ["url"],
+                                            "additionalProperties": True,
+                                        },
+                                    },
+                                },
+                                "required": ["field", "description", "references"],
+                                "additionalProperties": True,
+                            },
+                        },
+                    },
+                    "required": ["section_id", "description", "fields"],
+                    "additionalProperties": True,
+                },
+            },
+            "references": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string"},
+                        "title": {"type": "string"},
+                        "section_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "required": ["url"],
+                    "additionalProperties": True,
+                },
+            },
+        },
+        "required": ["title", "company_id", "executive_summary", "sections"],
+        "additionalProperties": True,
+    }
+
+    llm_input = {
+        "company_id": company_id,
+        "snapshot_id": snapshot.id,
+        "schema_id": snapshot.schema_id,
+        "schema_version": snapshot.schema_version,
+        "profile_sections": sections,
+        "profile_meta": (snapshot.profile_json or {}).get("profile_meta", {}),
+        "section_references": section_references,
+    }
+
+    try:
+        response = await deps.llm.generate_structured(
+            StructuredLLMRequest(
+                messages=[
+                    LLMMessage(
+                        role="system",
+                        content=(
+                            "Transform the profile data into a concise JSON report. "
+                            "Make it read like a document, but keep strict JSON output. "
+                            "Each field must include a plain-language description and references."
+                        ),
+                    ),
+                    LLMMessage(
+                        role="user",
+                        content=(
+                            "Convert this profile snapshot into the requested report schema:\n"
+                            f"{json.dumps(llm_input, default=str)}"
+                        ),
+                    ),
+                ],
+                response_schema=report_schema,
+                temperature=0.1,
+                max_tokens=3500,
+                task_type="synthesis",
+            )
+        )
+        if isinstance(response.structured_output, dict):
+            return response.structured_output
+    except Exception as e:
+        logger.warning("profile_report_generation_failed", company_id=company_id, error=str(e))
+
+    # Deterministic fallback if LLM response is unavailable.
+    fallback_sections = []
+    for section_id, section_payload in sections.items():
+        fields = []
+        if isinstance(section_payload, dict):
+            for field_name, field_value in section_payload.items():
+                fields.append(
+                    {
+                        "field": field_name,
+                        "value": field_value,
+                        "description": f"Reported value for '{field_name}'.",
+                        "references": [
+                            {
+                                "url": ref.get("url"),
+                                "title": ref.get("title"),
+                                "source_document_id": ref.get("source_document_id"),
+                                "evidence_excerpt": ref.get("excerpt"),
+                            }
+                            for ref in section_references.get(section_id, [])[:3]
+                            if ref.get("url")
+                        ],
+                    }
+                )
+        fallback_sections.append(
+            {
+                "section_id": section_id,
+                "section_title": section_id.replace("_", " ").title(),
+                "description": f"Summary for section '{section_id}'.",
+                "fields": fields,
+            }
+        )
+
+    return {
+        "title": "Company Due Diligence Report",
+        "company_id": company_id,
+        "executive_summary": "Structured report generated from latest stored profile snapshot.",
+        "sections": fallback_sections,
+        "references": [],
+    }
+
+
+async def _build_profile_report_text(company_id: str, snapshot: Any, deps: Any) -> str:
+    """Build a plain-text due diligence report."""
+    report_json = await _build_profile_report(company_id, snapshot, deps)
+    try:
+        response = await deps.llm.generate(
+            LLMRequest(
+                messages=[
+                    LLMMessage(
+                        role="system",
+                        content=(
+                            "Write a professional due diligence report as plain text. "
+                            "Use clear headings, concise paragraphs, bullet points for key findings, "
+                            "and an explicit References section. Do not output JSON."
+                        ),
+                    ),
+                    LLMMessage(
+                        role="user",
+                        content=(
+                            "Convert this report JSON into a readable text document:\n"
+                            f"{json.dumps(report_json, default=str)}"
+                        ),
+                    ),
+                ],
+                temperature=0.2,
+                max_tokens=3500,
+                task_type="synthesis",
+            )
+        )
+        text = (response.content or "").strip()
+        if text:
+            return text
+    except Exception as e:
+        logger.warning("profile_report_text_generation_failed", company_id=company_id, error=str(e))
+
+    # Deterministic fallback text document.
+    lines: list[str] = [
+        report_json.get("title", "Company Due Diligence Report"),
+        f"Company ID: {company_id}",
+        "",
+        "Executive Summary",
+        report_json.get("executive_summary", "No summary available."),
+        "",
+    ]
+
+    for section in report_json.get("sections", []):
+        lines.append(section.get("section_title") or section.get("section_id", "Section"))
+        lines.append(section.get("description", ""))
+        for field in section.get("fields", []):
+            lines.append(f"- {field.get('field', 'field')}: {field.get('description', '')}")
+            value = field.get("value")
+            if value is not None:
+                lines.append(f"  Value: {value}")
+        lines.append("")
+
+    lines.append("References")
+    for ref in report_json.get("references", []):
+        url = ref.get("url")
+        title = ref.get("title", "")
+        if url:
+            lines.append(f"- {title} {url}".strip())
+
+    return "\n".join(lines).strip()
+
+
 @router.get("/{company_id}")
 async def get_profile(company_id: str, request: Request) -> dict:
     """Get the latest profile snapshot for a company.
@@ -79,7 +375,7 @@ async def get_profile(company_id: str, request: Request) -> dict:
         company_id: The canonical company ID (e.g., company:www_example_com).
     """
     deps = request.app.state.deps
-    normalized_company_id = normalize_company_id(company_id)
+    normalized_company_id = await _resolve_company_id(company_id, deps)
     snapshot = await deps.profile_repo.get_latest(normalized_company_id)
     if not snapshot:
         return {
@@ -101,6 +397,22 @@ async def get_profile(company_id: str, request: Request) -> dict:
     }
 
 
+@router.get("/{company_id}/report")
+async def get_profile_report(company_id: str, request: Request) -> PlainTextResponse:
+    """Get a plain-text due diligence report for the latest profile snapshot."""
+    deps = request.app.state.deps
+    normalized_company_id = await _resolve_company_id(company_id, deps)
+    snapshot = await deps.profile_repo.get_latest(normalized_company_id)
+    if not snapshot:
+        return PlainTextResponse(
+            content=f"No profile found for {normalized_company_id}",
+            status_code=404,
+        )
+
+    report_text = await _build_profile_report_text(normalized_company_id, snapshot, deps)
+    return PlainTextResponse(content=report_text, media_type="text/plain")
+
+
 @router.get("/{company_id}/evidence")
 async def get_evidence(
     company_id: str,
@@ -114,7 +426,7 @@ async def get_evidence(
     Supports filtering by section_id, field_id, and limit.
     """
     deps = request.app.state.deps
-    normalized_company_id = normalize_company_id(company_id)
+    normalized_company_id = await _resolve_company_id(company_id, deps)
     evidence = await deps.evidence_repo.find_by_company(
         company_id=normalized_company_id,
         section_id=section_id,

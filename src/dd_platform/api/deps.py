@@ -132,6 +132,7 @@ class AppDependencies:
         self.retrieval_service = RetrievalService(
             retriever=self.hybrid_retriever,
             context_assembler=self.context_assembler,
+            evidence_repo=self.evidence_repo,
         )
 
     def _build_service_deps(self) -> dict[str, Any]:
