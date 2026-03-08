@@ -1,0 +1,37 @@
+{
+  "company_overview": [
+    {
+      "title": "Globex Technologies Announces IPO Plans",
+      "url": "https://mock-news.example.com/globex-ipo",
+      "content": "Globex Technologies Inc. has filed a confidential S-1 with the SEC, signaling IPO plans for late 2026. The company's valuation is expected to reach $3 billion based on its strong revenue growth trajectory and expanding government contracts.",
+      "source": "tavily"
+    }
+  ],
+  "key_personnel": [],
+  "financials": [
+    {
+      "title": "Globex Q4 2025 Financial Update",
+      "url": "https://mock-finance.example.com/globex-q4",
+      "content": "Globex Technologies achieved profitability in Q4 2025, one quarter ahead of schedule, with net income of $3.2 million. Annual recurring revenue (ARR) reached $420 million. The company's cash position is $180 million following the Series D round.",
+      "source": "tavily"
+    }
+  ],
+  "esg": [],
+  "legal_compliance": [
+    {
+      "title": "Globex Technologies Data Breach Notification",
+      "url": "https://mock-legal.example.com/globex-breach",
+      "content": "Globex Technologies disclosed a data security incident in February 2026 affecting approximately 15,000 customer records from its SmartFactory platform. The breach was caused by a misconfigured cloud storage bucket. The company has notified affected customers and regulatory authorities. No financial data was exposed, but sensor configuration data and facility layouts were compromised. An independent security audit is underway.",
+      "source": "tavily"
+    }
+  ],
+  "supply_chain_risks": [
+    {
+      "title": "TSMC Supply Constraints Impact Globex",
+      "url": "https://mock-supply.example.com/tsmc-constraints",
+      "content": "TSMC's allocation cuts for non-priority customers are expected to delay Globex Technologies' sensor chip deliveries by 8-12 weeks in Q2 2026. Globex has begun qualifying Samsung as an alternative fabrication partner but the transition will take 6-9 months. This could impact deliveries to key customers including Acme Corp and Siemens.",
+      "source": "serpapi"
+    }
+  ],
+  "certifications": []
+}

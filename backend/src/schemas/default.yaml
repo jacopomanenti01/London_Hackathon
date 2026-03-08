@@ -1,0 +1,136 @@
+version: "1.0"
+name: "Supply Chain Due Diligence Profile"
+description: "Standard due diligence profile for supply chain risk assessment"
+
+sections:
+  company_overview:
+    description: "Basic company information and background"
+    fields:
+      - name: "legal_name"
+        type: "string"
+        required: true
+      - name: "description"
+        type: "string"
+        required: true
+      - name: "industry"
+        type: "string"
+        required: true
+      - name: "headquarters"
+        type: "string"
+        required: false
+      - name: "founded"
+        type: "string"
+        required: false
+      - name: "employee_count"
+        type: "string"
+        required: false
+      - name: "website"
+        type: "string"
+        required: true
+    data_sources:
+      - "tavily"
+      - "serpapi"
+
+  key_personnel:
+    description: "Key executives and board members"
+    fields:
+      - name: "executives"
+        type: "list"
+        required: true
+      - name: "board_members"
+        type: "list"
+        required: false
+    data_sources:
+      - "linkedin_people"
+
+  financials:
+    description: "Financial health indicators"
+    fields:
+      - name: "revenue"
+        type: "string"
+        required: false
+      - name: "profit"
+        type: "string"
+        required: false
+      - name: "funding"
+        type: "string"
+        required: false
+      - name: "financial_summary"
+        type: "string"
+        required: true
+    data_sources:
+      - "tavily"
+      - "serpapi"
+
+  esg:
+    description: "Environmental, Social, and Governance factors"
+    fields:
+      - name: "environmental_practices"
+        type: "string"
+        required: false
+      - name: "social_responsibility"
+        type: "string"
+        required: false
+      - name: "governance_structure"
+        type: "string"
+        required: false
+      - name: "esg_rating"
+        type: "string"
+        required: false
+    data_sources:
+      - "tavily"
+
+  legal_compliance:
+    description: "Legal issues, regulatory compliance, and sanctions"
+    fields:
+      - name: "lawsuits"
+        type: "list"
+        required: false
+      - name: "regulatory_actions"
+        type: "list"
+        required: false
+      - name: "sanctions"
+        type: "list"
+        required: false
+      - name: "compliance_summary"
+        type: "string"
+        required: true
+    data_sources:
+      - "tavily"
+      - "serpapi"
+
+  supply_chain_risks:
+    description: "Supply chain specific risks and dependencies"
+    fields:
+      - name: "key_suppliers"
+        type: "list"
+        required: false
+      - name: "key_customers"
+        type: "list"
+        required: false
+      - name: "geographic_risks"
+        type: "list"
+        required: false
+      - name: "concentration_risks"
+        type: "string"
+        required: false
+      - name: "risk_summary"
+        type: "string"
+        required: true
+    data_sources:
+      - "tavily"
+      - "serpapi"
+      - "apify"
+
+  certifications:
+    description: "Industry certifications and standards compliance"
+    fields:
+      - name: "certifications"
+        type: "list"
+        required: false
+      - name: "standards"
+        type: "list"
+        required: false
+    data_sources:
+      - "tavily"
+      - "apify"

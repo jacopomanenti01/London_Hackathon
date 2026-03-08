@@ -1,0 +1,30 @@
+{
+  "company_overview": [
+    {
+      "title": "Initech Consulting Wins Major Government Contract",
+      "url": "https://mock-news.example.com/initech-govt",
+      "content": "Initech Consulting Group has been awarded a $15 million contract by the US Department of Defense to assess supply chain vulnerabilities in the defense industrial base. The 3-year contract will leverage Initech's expertise in ITAR compliance and supply chain risk assessment. This is the firm's largest government contract to date.",
+      "source": "tavily"
+    }
+  ],
+  "key_personnel": [
+    {
+      "title": "James Morrison - New Partner at Initech Consulting",
+      "url": "https://mock-linkedin.example.com/james-morrison",
+      "content": "Initech Consulting has appointed James Morrison as Partner, heading a new Cybersecurity & Supply Chain practice. Morrison previously served as CISO at Lockheed Martin and brings 20 years of defense industry experience. His appointment comes as Initech expands its government advisory capabilities.",
+      "source": "linkedin"
+    }
+  ],
+  "financials": [],
+  "esg": [],
+  "legal_compliance": [
+    {
+      "title": "Initech Consultant Charged with Insider Trading",
+      "url": "https://mock-legal.example.com/initech-insider",
+      "content": "A senior consultant at Initech Consulting Group has been charged by the SEC with insider trading, allegedly using confidential client information obtained during supply chain audits to trade in publicly listed companies. Initech has terminated the individual and stated the conduct was unauthorized. The firm has engaged outside counsel and is cooperating with the SEC investigation. This raises questions about information barriers within consulting firms.",
+      "source": "tavily"
+    }
+  ],
+  "supply_chain_risks": [],
+  "certifications": []
+}

@@ -1,0 +1,82 @@
+{
+  "company_overview": [
+    {
+      "title": "Acme Corp - Company Profile",
+      "url": "https://mock-biz.example.com/acme-profile",
+      "content": "Acme Corp is a Chicago-based industrial manufacturing company founded in 1985. The company specializes in precision engineering components for automotive and aerospace industries. With approximately 4,500 employees and headquarters at 100 Industrial Parkway, Chicago, IL, Acme Corp has grown to become a key supplier in the North American manufacturing supply chain. The company reported annual revenue of $1.2 billion in 2025.",
+      "source": "tavily"
+    },
+    {
+      "title": "Acme Corp Overview - Industry Report",
+      "url": "https://mock-industry.example.com/acme",
+      "content": "Acme Corp (legal name: Acme Manufacturing Corporation) operates in the industrial manufacturing sector, primarily serving Tier 1 automotive suppliers and defense contractors. The company holds ISO 9001 and AS9100 certifications. CEO John Richardson has led the company since 2018.",
+      "source": "serpapi"
+    }
+  ],
+  "key_personnel": [
+    {
+      "title": "John Richardson - CEO at Acme Corp",
+      "url": "https://mock-linkedin.example.com/john-richardson",
+      "content": "John Richardson has been CEO of Acme Corp since 2018. Previously, he served as COO at Globex Technologies for 5 years. MBA from Wharton School of Business. Board member at the National Manufacturing Association.",
+      "source": "linkedin"
+    },
+    {
+      "title": "Sarah Chen - CFO at Acme Corp",
+      "url": "https://mock-linkedin.example.com/sarah-chen",
+      "content": "Sarah Chen joined Acme Corp as CFO in 2020. Former VP of Finance at Initech Consulting. CPA with 20 years of experience in manufacturing finance. She also serves on the board of directors at Midwest Industrial Partners.",
+      "source": "linkedin"
+    },
+    {
+      "title": "David Park - CTO at Acme Corp",
+      "url": "https://mock-linkedin.example.com/david-park",
+      "content": "David Park serves as CTO of Acme Corp, leading digital transformation initiatives. Previously held engineering leadership roles at Tesla and Boeing. PhD in Mechanical Engineering from MIT.",
+      "source": "linkedin"
+    }
+  ],
+  "financials": [
+    {
+      "title": "Acme Corp Financial Results 2025",
+      "url": "https://mock-finance.example.com/acme-2025",
+      "content": "Acme Manufacturing Corporation reported revenue of $1.2 billion for fiscal year 2025, up 8% from the prior year. Net profit margin stood at 7.3%, with operating income of $87.6 million. The company completed a $150 million credit facility refinancing in Q3 2025. Debt-to-equity ratio is 0.45, indicating conservative financial management. The company has $200 million in cash reserves.",
+      "source": "tavily"
+    }
+  ],
+  "esg": [
+    {
+      "title": "Acme Corp Sustainability Report 2025",
+      "url": "https://mock-esg.example.com/acme-sustainability",
+      "content": "Acme Corp published its 2025 sustainability report highlighting a 15% reduction in carbon emissions since 2022. The company has committed to net-zero emissions by 2040. Their Springfield facility runs on 60% renewable energy. The company maintains a B+ ESG rating from MSCI. However, concerns have been raised about water usage at their Texas manufacturing plant.",
+      "source": "tavily"
+    }
+  ],
+  "legal_compliance": [
+    {
+      "title": "Acme Corp EPA Settlement",
+      "url": "https://mock-legal.example.com/acme-epa",
+      "content": "Acme Corp settled with the EPA in March 2025 for $2.3 million regarding improper chemical waste disposal at its Springfield, IL plant. The company has since implemented a comprehensive environmental compliance program and appointed a Chief Compliance Officer. No ongoing sanctions or trade restrictions apply to the company.",
+      "source": "tavily"
+    },
+    {
+      "title": "Acme Corp Regulatory Standing",
+      "url": "https://mock-legal.example.com/acme-compliance",
+      "content": "Acme Manufacturing Corporation maintains a clean regulatory record apart from the 2025 EPA settlement. The company is not on any sanctions lists (OFAC, EU, UN). Current compliance certifications include ITAR registration and EAR compliance for defense-related manufacturing.",
+      "source": "serpapi"
+    }
+  ],
+  "supply_chain_risks": [
+    {
+      "title": "Acme Corp Supply Chain Analysis",
+      "url": "https://mock-supply.example.com/acme-chain",
+      "content": "Acme Corp sources critical raw materials from three key suppliers: Alpha Metals (steel, based in Germany), Pacific Rare Elements (rare earth metals, based in China), and Southern Polymers (specialty plastics, based in Mexico). The company supplies components to major customers including Ford, General Motors, and Lockheed Martin. Geographic concentration risk exists due to 40% of raw materials sourced from China through Pacific Rare Elements. The company has a secondary supplier qualification program but has not fully diversified rare earth sourcing.",
+      "source": "tavily"
+    }
+  ],
+  "certifications": [
+    {
+      "title": "Acme Corp Certifications",
+      "url": "https://mock-certs.example.com/acme",
+      "content": "Acme Manufacturing Corporation holds the following certifications: ISO 9001:2015 (Quality Management), AS9100D (Aerospace Quality), ISO 14001:2015 (Environmental Management), IATF 16949 (Automotive Quality). The company is also ITAR registered for defense manufacturing. ISO 14001 certification is due for renewal in Q2 2026.",
+      "source": "tavily"
+    }
+  ]
+}
