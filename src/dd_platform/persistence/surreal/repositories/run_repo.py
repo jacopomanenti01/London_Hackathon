@@ -8,6 +8,7 @@ from typing import Any
 from ....domain.run import AgentRun, RunStatus
 from ....logging import get_logger
 from ....utils.ids import generate_id
+from ....utils.surreal import thing
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -34,7 +35,7 @@ class RunRepository:
 
         # Link run to company
         await self._client.execute(
-            f"RELATE {run_id}->run_for_company->{run.company_id};",
+            f"RELATE {thing(run_id)}->run_for_company->{thing(run.company_id)};",
         )
 
         logger.info(

@@ -7,6 +7,8 @@ from typing import Any
 from ....domain.profile import ProfileSnapshot
 from ....logging import get_logger
 from ....utils.ids import generate_id
+from ....utils.surreal import thing
+from ....utils.url_normalization import normalize_company_id, to_legacy_company_id
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -21,6 +23,15 @@ class ProfileRepository:
 
     def __init__(self, client: SurrealClient) -> None:
         self._client = client
+
+    @staticmethod
+    def _normalize_record(record: dict[str, Any]) -> dict[str, Any]:
+        """Normalize Surreal record payloads for Pydantic models."""
+        normalized = dict(record)
+        rec_id = normalized.get("id")
+        if rec_id is not None and not isinstance(rec_id, str):
+            normalized["id"] = str(rec_id)
+        return normalized
 
     async def create_snapshot(
         self, snapshot: ProfileSnapshot, run_id: str | None = None
@@ -56,12 +67,12 @@ class ProfileRepository:
 
         # Create graph edge: company -> snapshot
         await self._client.execute(
-            f"RELATE {snapshot.company_id}->company_has_snapshot->{snapshot_id};",
+            f"RELATE {thing(snapshot.company_id)}->company_has_snapshot->{thing(snapshot_id)};",
         )
 
         # Update company with latest snapshot reference
         await self._client.execute(
-            f"UPDATE {snapshot.company_id} SET latest_profile_snapshot_id = $sid, updated_at = time::now();",
+            f"UPDATE {thing(snapshot.company_id)} SET latest_profile_snapshot_id = $sid, updated_at = time::now();",
             {"sid": snapshot_id},
         )
 
@@ -76,7 +87,7 @@ class ProfileRepository:
             )
             await self._client.create(section_record_id, section_data)
             await self._client.execute(
-                f"RELATE {snapshot_id}->snapshot_has_section->{section_record_id};",
+                f"RELATE {thing(snapshot_id)}->snapshot_has_section->{thing(section_record_id)};",
             )
 
         logger.info(
@@ -96,26 +107,63 @@ class ProfileRepository:
         Returns:
             Latest ProfileSnapshot or None.
         """
-        result = await self._client.execute(
-            "SELECT * FROM profile_snapshot WHERE company_id = $cid AND is_latest = true "
-            "ORDER BY created_at DESC LIMIT 1;",
-            {"cid": company_id},
-        )
-        if result and result[0].get("result"):
-            records = result[0]["result"]
-            if records:
-                return ProfileSnapshot(**records[0])
+        canonical_id = normalize_company_id(company_id)
+        id_candidates = [canonical_id]
+        # Backward compatibility for older dot-style company IDs.
+        if canonical_id.startswith("company:"):
+            host = canonical_id.split(":", 1)[1]
+            dot_id = f"company:{host.replace('_', '.')}"
+            if dot_id != canonical_id:
+                id_candidates.append(dot_id)
+        legacy_id = to_legacy_company_id(canonical_id)
+        if legacy_id not in id_candidates:
+            id_candidates.append(legacy_id)
 
-        # Fallback for legacy/inconsistent rows where is_latest may be absent/incorrect.
-        fallback = await self._client.execute(
-            "SELECT * FROM profile_snapshot WHERE company_id = $cid "
-            "ORDER BY created_at DESC LIMIT 1;",
-            {"cid": company_id},
-        )
-        if fallback and fallback[0].get("result"):
-            records = fallback[0]["result"]
-            if records:
-                return ProfileSnapshot(**records[0])
+        for cid in id_candidates:
+            result = await self._client.execute(
+                "SELECT * FROM profile_snapshot WHERE company_id = $cid AND is_latest = true "
+                "ORDER BY created_at DESC LIMIT 1;",
+                {"cid": cid},
+            )
+            if result and result[0].get("result"):
+                records = result[0]["result"]
+                if records:
+                    return ProfileSnapshot(**self._normalize_record(records[0]))
+
+            # Fallback for legacy/inconsistent rows where is_latest may be absent/incorrect.
+            fallback = await self._client.execute(
+                "SELECT * FROM profile_snapshot WHERE company_id = $cid "
+                "ORDER BY created_at DESC LIMIT 1;",
+                {"cid": cid},
+            )
+            if fallback and fallback[0].get("result"):
+                records = fallback[0]["result"]
+                if records:
+                    return ProfileSnapshot(**self._normalize_record(records[0]))
+
+        # Fallback: resolve latest snapshot from company pointer.
+        try:
+            company = None
+            for cid in id_candidates:
+                company = await self._client.select(cid)
+                if company:
+                    break
+            company_data = company if isinstance(company, dict) else company[0] if company else None
+            latest_snapshot_id = (
+                company_data.get("latest_profile_snapshot_id")
+                if isinstance(company_data, dict)
+                else None
+            )
+            if latest_snapshot_id:
+                pointed = await self.get_by_id(str(latest_snapshot_id))
+                if pointed:
+                    return pointed
+        except Exception as e:
+            logger.warning(
+                "snapshot_latest_pointer_lookup_failed",
+                company_id=company_id,
+                error=str(e),
+            )
         return None
 
     async def get_by_id(self, snapshot_id: str) -> ProfileSnapshot | None:
@@ -132,7 +180,7 @@ class ProfileRepository:
             if result:
                 data = result if isinstance(result, dict) else result[0] if result else None
                 if data:
-                    return ProfileSnapshot(**data)
+                    return ProfileSnapshot(**self._normalize_record(data))
         except Exception as e:
             logger.error("snapshot_fetch_error", snapshot_id=snapshot_id, error=str(e))
         return None
@@ -154,5 +202,5 @@ class ProfileRepository:
             {"cid": company_id, "limit": limit},
         )
         if result and result[0].get("result"):
-            return [ProfileSnapshot(**r) for r in result[0]["result"]]
+            return [ProfileSnapshot(**self._normalize_record(r)) for r in result[0]["result"]]
         return []

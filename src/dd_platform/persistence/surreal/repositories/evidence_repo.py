@@ -7,6 +7,7 @@ from typing import Any
 from ....domain.evidence import Evidence, SourceDocument
 from ....logging import get_logger
 from ....utils.ids import generate_id
+from ....utils.surreal import thing
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -41,7 +42,7 @@ class EvidenceRepository:
 
         # Create graph edge: company -> source
         await self._client.execute(
-            f"RELATE {source.company_id}->company_has_source->{source_id};",
+            f"RELATE {thing(source.company_id)}->company_has_source->{thing(source_id)};",
         )
 
         logger.info(
@@ -74,7 +75,7 @@ class EvidenceRepository:
         src_id = source_id or evidence.source_document_id
         if src_id:
             await self._client.execute(
-                f"RELATE {src_id}->source_has_evidence->{evidence_id};",
+                f"RELATE {thing(src_id)}->source_has_evidence->{thing(evidence_id)};",
             )
 
         logger.info(

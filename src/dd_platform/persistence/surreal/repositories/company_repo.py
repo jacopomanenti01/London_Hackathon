@@ -7,6 +7,8 @@ from typing import Any
 
 from ....domain.company import Company, CompanyRef, DomainAlias
 from ....logging import get_logger
+from ....utils.surreal import thing
+from ....utils.url_normalization import normalize_company_id, to_legacy_company_id
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -31,12 +33,23 @@ class CompanyRepository:
         Returns:
             Company record or None.
         """
+        canonical_id = normalize_company_id(company_id)
+        legacy_id = to_legacy_company_id(canonical_id)
+
         try:
-            result = await self._client.select(company_id)
+            result = await self._client.select(canonical_id)
             if result:
                 data = result if isinstance(result, dict) else result[0] if result else None
                 if data:
                     return Company(**data)
+
+            # Backward compatibility for pre-canonical underscore IDs.
+            if legacy_id != canonical_id:
+                legacy = await self._client.select(legacy_id)
+                if legacy:
+                    data = legacy if isinstance(legacy, dict) else legacy[0] if legacy else None
+                    if data:
+                        return Company(**data)
         except Exception as e:
             logger.error("company_find_error", company_id=company_id, error=str(e))
         return None
@@ -88,7 +101,7 @@ class CompanyRepository:
             data["created_at"] = now
             data["status"] = "active"
             await self._client.execute(
-                f"CREATE {company_ref.canonical_id} CONTENT $data;",
+                f"CREATE {thing(company_ref.canonical_id)} CONTENT $data;",
                 {"data": data},
             )
             logger.info("company_created", company_id=company_ref.canonical_id)
@@ -109,7 +122,7 @@ class CompanyRepository:
 
         if alias_id:
             await self._client.execute(
-                f"RELATE {alias.company_id}->company_has_alias->{alias_id};",
+                f"RELATE {thing(alias.company_id)}->company_has_alias->{thing(alias_id)};",
             )
             logger.info(
                 "alias_added",

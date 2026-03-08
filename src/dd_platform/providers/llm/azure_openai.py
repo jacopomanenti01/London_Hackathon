@@ -100,6 +100,22 @@ class AzureOpenAIAdapter(LLMAdapter):
             return max(base, 90.0)
         return base
 
+    def _log_raw_response(self, data: dict[str, Any], task_type: str, structured: bool) -> None:
+        """Log raw LLM response details for troubleshooting empty/invalid outputs."""
+        choices = data.get("choices", [])
+        first_choice = choices[0] if choices else {}
+        message = first_choice.get("message", {}) if isinstance(first_choice, dict) else {}
+        raw_content = message.get("content")
+        logger.info(
+            "llm_raw_response",
+            task_type=task_type,
+            structured=structured,
+            finish_reason=first_choice.get("finish_reason") if isinstance(first_choice, dict) else None,
+            content_type=type(raw_content).__name__,
+            content_preview=str(raw_content)[:2000],
+            response_preview=json.dumps(data, default=str)[:3000],
+        )
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=30),
@@ -136,6 +152,7 @@ class AzureOpenAIAdapter(LLMAdapter):
             )
             resp.raise_for_status()
             data = resp.json()
+            self._log_raw_response(data, request.task_type, structured=False)
         except httpx.HTTPStatusError as e:
             logger.error(
                 "llm_request_failed",
@@ -234,6 +251,7 @@ class AzureOpenAIAdapter(LLMAdapter):
             )
             resp.raise_for_status()
             data = resp.json()
+            self._log_raw_response(data, request.task_type, structured=True)
         except httpx.HTTPStatusError as e:
             logger.error(
                 "llm_structured_request_failed",

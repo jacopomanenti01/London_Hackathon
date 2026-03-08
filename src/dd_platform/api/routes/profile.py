@@ -7,6 +7,8 @@ from typing import Any
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
+from ...utils.url_normalization import normalize_company_id
+
 router = APIRouter(prefix="/api/v1/profiles", tags=["profiles"])
 
 
@@ -77,12 +79,17 @@ async def get_profile(company_id: str, request: Request) -> dict:
         company_id: The canonical company ID (e.g., company:www_example_com).
     """
     deps = request.app.state.deps
-    snapshot = await deps.profile_repo.get_latest(company_id)
+    normalized_company_id = normalize_company_id(company_id)
+    snapshot = await deps.profile_repo.get_latest(normalized_company_id)
     if not snapshot:
-        return {"company_id": company_id, "profile": None, "message": "No profile found"}
+        return {
+            "company_id": normalized_company_id,
+            "profile": None,
+            "message": "No profile found",
+        }
 
     return {
-        "company_id": company_id,
+        "company_id": normalized_company_id,
         "snapshot_id": snapshot.id,
         "schema_id": snapshot.schema_id,
         "schema_version": snapshot.schema_version,
@@ -107,14 +114,15 @@ async def get_evidence(
     Supports filtering by section_id, field_id, and limit.
     """
     deps = request.app.state.deps
+    normalized_company_id = normalize_company_id(company_id)
     evidence = await deps.evidence_repo.find_by_company(
-        company_id=company_id,
+        company_id=normalized_company_id,
         section_id=section_id,
         field_id=field_id,
         limit=limit,
     )
     return {
-        "company_id": company_id,
+        "company_id": normalized_company_id,
         "evidence": [e.model_dump(mode="json") for e in evidence],
         "count": len(evidence),
     }

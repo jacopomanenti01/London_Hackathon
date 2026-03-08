@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Any
 
 from ..application.services.chat_service import ChatService
@@ -22,6 +21,7 @@ from ..persistence.surreal.repositories.evidence_repo import EvidenceRepository
 from ..persistence.surreal.repositories.profile_repo import ProfileRepository
 from ..persistence.surreal.repositories.run_repo import RunRepository
 from ..providers.llm.azure_openai import AzureOpenAIAdapter
+from ..providers.llm.openrouter import OpenRouterAdapter
 from ..providers.search.aggregator import SearchAggregator
 from ..providers.search.apify import ApifyTool
 from ..providers.search.serpapi import SerpAPITool
@@ -82,7 +82,11 @@ class AppDependencies:
         self.evidence_search = EvidenceSearchQueries(self.surreal_client)
 
         # LLM adapter
-        self.llm = AzureOpenAIAdapter(settings.azure_llm)
+        provider = settings.llm_provider.strip().lower()
+        if provider == "openrouter":
+            self.llm = OpenRouterAdapter(settings.openrouter_llm)
+        else:
+            self.llm = AzureOpenAIAdapter(settings.azure_llm)
 
         # Research tools
         tools = []
@@ -93,7 +97,10 @@ class AppDependencies:
         if _is_configured_secret(settings.apify.token):
             tools.append(ApifyTool(settings.apify))
         self.search_aggregator = SearchAggregator(tools)
-        logger.info("search_tools_initialized", enabled_tools=self.search_aggregator.available_tools)
+        logger.info(
+            "search_tools_initialized",
+            enabled_tools=self.search_aggregator.available_tools,
+        )
 
         # Schema service
         self.schema_service = SchemaService(settings.schemas_dir)

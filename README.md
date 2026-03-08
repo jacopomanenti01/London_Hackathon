@@ -195,6 +195,64 @@ curl -X POST http://localhost:8080/api/v1/chat \
 }
 ```
 
+**Build Request Fields**
+
+- `company_url`: Target company website to profile. Normalized into canonical company ID (for example `company:www_example_com`).
+- `force_refresh`: If `true`, ignores freshness/TTL reuse and fetches fresh evidence for selected sections.
+- `schema_id`: Profile schema to use (section/field definitions), e.g. `due_diligence_v1`. `null` uses active schema.
+- `publish_snapshot`: If `true`, saves an immutable `profile_snapshot` in SurrealDB.
+- `research_scope`: Which schema sections to build. Use `["all"]` for full profile, or a subset of section IDs.
+- `retrieval_profile`: Retrieval strategy config (keyword/graph behavior), e.g. `graph_hybrid_expanded`.
+- `experiment_tags`: Free-form labels stored with `agent_run` metadata for filtering/comparison/audit.
+
+**Allowed `research_scope` section IDs (`due_diligence_v1`)**
+
+- `company_identity`
+- `ownership_and_structure`
+- `operations_and_supply_chain`
+- `compliance_and_risk`
+- `esg_and_certifications`
+- `financial_health`
+- `profile_meta`
+
+**Common `retrieval_profile` values**
+
+- `keyword_only`
+- `hybrid_basic`
+- `graph_hybrid_expanded`
+- `schema_aware_graph_hybrid`
+- `contradiction_aware_graph_hybrid`
+
+**Example Payloads**
+
+Full refresh for all sections:
+
+```json
+{
+  "company_url": "www.google.com",
+  "force_refresh": true,
+  "schema_id": "due_diligence_v1",
+  "publish_snapshot": true,
+  "research_scope": ["all"],
+  "retrieval_profile": "graph_hybrid_expanded",
+  "experiment_tags": ["google-full-refresh"]
+}
+```
+
+Targeted refresh for compliance + financial:
+
+```json
+{
+  "company_url": "www.google.com",
+  "force_refresh": false,
+  "schema_id": "due_diligence_v1",
+  "publish_snapshot": true,
+  "research_scope": ["compliance_and_risk", "financial_health"],
+  "retrieval_profile": "contradiction_aware_graph_hybrid",
+  "experiment_tags": ["targeted-risk-pass"]
+}
+```
+
 **Response:**
 
 ```json
@@ -285,7 +343,9 @@ See [`.env.example`](.env.example) for the full list. Key groups:
 
 | Group | Variables | Purpose |
 |-------|-----------|---------|
+| **LLM Provider** | `LLM_PROVIDER` | Select `azure_openai` (default) or `openrouter` |
 | **Azure OpenAI** | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` | LLM for claim extraction and synthesis |
+| **OpenRouter** | `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | Alternate LLM provider via OpenRouter chat completions |
 | **SurrealDB** | `SURREAL_URL`, `SURREAL_USERNAME`, `SURREAL_PASSWORD` | Graph database connection |
 | **Tavily** | `TAVILY_API_KEY` | Primary web search tool |
 | **SerpAPI** | `SERPAPI_API_KEY` | Secondary web search (Google) |

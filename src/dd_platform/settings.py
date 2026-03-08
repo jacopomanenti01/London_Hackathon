@@ -24,6 +24,22 @@ class AzureLLMSettings(BaseSettings):
     timeout_seconds: int = Field(default=60, description="Request timeout in seconds")
 
 
+class OpenRouterLLMSettings(BaseSettings):
+    """OpenRouter LLM provider settings."""
+
+    model_config = SettingsConfigDict(env_prefix="OPENROUTER_", extra="ignore")
+
+    api_key: str = Field(default="", description="OpenRouter API key")
+    base_url: str = Field(
+        default="https://openrouter.ai/api/v1", description="OpenRouter base URL"
+    )
+    model: str = Field(default="openai/gpt-4o-mini", description="Default OpenRouter model")
+    timeout_seconds: int = Field(default=120, description="Request timeout in seconds")
+    max_retries: int = Field(default=3, description="Max retries for OpenRouter calls")
+    http_referer: str = Field(default="", description="Optional HTTP-Referer header")
+    x_title: str = Field(default="dd-platform", description="Optional X-Title header")
+
+
 class SurrealDBSettings(BaseSettings):
     """SurrealDB connection settings."""
 
@@ -102,6 +118,10 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Log level")
     host: str = Field(default="0.0.0.0", description="API host")
     port: int = Field(default=8080, description="API port")
+    llm_provider: str = Field(
+        default="azure_openai",
+        description="LLM provider: azure_openai or openrouter",
+    )
 
     # Schema
     active_schema_id: str = Field(
@@ -115,6 +135,7 @@ class Settings(BaseSettings):
 
     # Sub-settings
     azure_llm: AzureLLMSettings = Field(default_factory=AzureLLMSettings)
+    openrouter_llm: OpenRouterLLMSettings = Field(default_factory=OpenRouterLLMSettings)
     surrealdb: SurrealDBSettings = Field(default_factory=SurrealDBSettings)
     tavily: TavilySettings = Field(default_factory=TavilySettings)
     serpapi: SerpAPISettings = Field(default_factory=SerpAPISettings)
@@ -127,6 +148,7 @@ def get_settings() -> Settings:
     settings = Settings()
     # Ensure nested provider settings also read from the same .env file.
     settings.azure_llm = AzureLLMSettings(_env_file=".env", _env_file_encoding="utf-8")
+    settings.openrouter_llm = OpenRouterLLMSettings(_env_file=".env", _env_file_encoding="utf-8")
     settings.surrealdb = SurrealDBSettings(_env_file=".env", _env_file_encoding="utf-8")
     settings.tavily = TavilySettings(_env_file=".env", _env_file_encoding="utf-8")
     settings.serpapi = SerpAPISettings(_env_file=".env", _env_file_encoding="utf-8")

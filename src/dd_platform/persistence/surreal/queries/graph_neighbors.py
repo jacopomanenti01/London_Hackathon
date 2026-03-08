@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ....logging import get_logger
+from ....utils.surreal import thing
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -67,11 +68,11 @@ class GraphNeighborQueries:
                 f"""
                 SELECT *,
                     ->evidence_supports_claim->claim AS supported_claims
-                FROM {evidence_id};
+                FROM {thing(evidence_id)};
                 """,
             )
         else:
-            result = await self._client.execute(f"SELECT * FROM {evidence_id};")
+            result = await self._client.execute(f"SELECT * FROM {thing(evidence_id)};")
 
         return {"evidence_id": evidence_id, "neighbors": result[0].get("result", []) if result else []}
 
@@ -91,7 +92,7 @@ class GraphNeighborQueries:
             SELECT *,
                 <-evidence_supports_claim<-evidence AS supporting_evidence,
                 ->claim_related_to_claim->claim AS related_claims
-            FROM {claim_id};
+            FROM {thing(claim_id)};
         """
         result = await self._client.execute(query)
         return {

@@ -6,6 +6,7 @@ from typing import Any
 
 from ....domain.claim import Claim, ClaimStatus
 from ....logging import get_logger
+from ....utils.surreal import thing
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -37,14 +38,14 @@ class ClaimRepository:
 
         # Link claim to company
         await self._client.execute(
-            f"RELATE {claim_id}->claim_belongs_to_company->{claim.company_id};",
+            f"RELATE {thing(claim_id)}->claim_belongs_to_company->{thing(claim.company_id)};",
         )
 
         # Link evidence -> claim
         if evidence_ids:
             for eid in evidence_ids:
                 await self._client.execute(
-                    f"RELATE {eid}->evidence_supports_claim->{claim_id};",
+                    f"RELATE {thing(eid)}->evidence_supports_claim->{thing(claim_id)};",
                 )
 
         logger.info(
@@ -125,10 +126,10 @@ class ClaimRepository:
             contradicting_claim_id: Second claim.
         """
         await self._client.execute(
-            f"UPDATE {claim_id} SET status = 'contradicted';",
+            f"UPDATE {thing(claim_id)} SET status = 'contradicted';",
         )
         await self._client.execute(
-            f"RELATE {claim_id}->claim_related_to_claim->{contradicting_claim_id} "
+            f"RELATE {thing(claim_id)}->claim_related_to_claim->{thing(contradicting_claim_id)} "
             f"SET relation_type = 'contradicts';",
         )
         logger.info(

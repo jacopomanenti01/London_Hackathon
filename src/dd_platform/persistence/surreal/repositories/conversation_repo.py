@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ....domain.conversation import Conversation, Message
 from ....logging import get_logger
+from ....utils.surreal import thing
 from ..client import SurrealClient
 
 logger = get_logger(__name__)
@@ -28,7 +29,7 @@ class ConversationRepository:
         conv_id = result.get("id") if isinstance(result, dict) else str(result)
 
         await self._client.execute(
-            f"RELATE {conv_id}->conversation_about_company->{company_id};",
+            f"RELATE {thing(conv_id)}->conversation_about_company->{thing(company_id)};",
         )
         logger.info("conversation_created", conversation_id=conv_id, company_id=company_id)
         return conv_id
@@ -48,7 +49,7 @@ class ConversationRepository:
 
         # Update conversation timestamp
         await self._client.execute(
-            f"UPDATE {message.conversation_id} SET updated_at = time::now();",
+            f"UPDATE {thing(message.conversation_id)} SET updated_at = time::now();",
         )
 
         logger.info(

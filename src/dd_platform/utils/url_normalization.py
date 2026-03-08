@@ -1,7 +1,7 @@
 """URL normalization and canonical company identity resolution.
 
 The canonical company identifier is derived from the normalized main URL host.
-Example: https://www.company.com/ -> company:www.company.com
+Example: https://www.company.com/ -> company:www_company_com
 """
 
 from __future__ import annotations
@@ -87,10 +87,31 @@ def extract_root_domain(url: str) -> str:
 
 def make_canonical_id(host: str) -> str:
     """Create a SurrealDB-compatible canonical company ID."""
-    # SurrealDB record IDs use the format table:id
-    # We use backtick-wrapped ID for hosts with dots
-    safe_host = host.replace(".", "_")
-    return f"company:{safe_host}"
+    # Canonical ID format: company:<normalized-host-with-underscores>
+    # Example: company:www_google_com
+    return f"company:{host.replace('.', '_')}"
+
+
+def normalize_company_id(company_id: str) -> str:
+    """Normalize company ID to canonical underscore form."""
+    raw = company_id.strip().strip("'\"").lower()
+    if not raw:
+        return raw
+    if not raw.startswith("company:"):
+        # Allow host-only IDs in API calls.
+        return f"company:{raw.replace('.', '_')}"
+    host = raw.split(":", 1)[1].strip().lower()
+    return f"company:{host.replace('.', '_')}"
+
+
+def to_legacy_company_id(company_id: str) -> str:
+    """Backward-compatible alias for canonical company ID normalization."""
+    return normalize_company_id(company_id)
+
+
+def to_public_company_id(company_id: str) -> str:
+    """Return canonical API company ID format."""
+    return normalize_company_id(company_id)
 
 
 def resolve_company_identity(raw_url: str) -> CompanyRef:

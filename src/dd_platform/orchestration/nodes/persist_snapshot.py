@@ -14,7 +14,7 @@ from ...persistence.surreal.repositories.profile_repo import ProfileRepository
 from ...persistence.surreal.repositories.run_repo import RunRepository
 from ...domain.claim import Claim
 from ...domain.run import RunStatus
-from ..state import BuildProfileState, WorkflowStage
+from ..state import BuildProfileState, FreshnessAssessment, WorkflowStage
 
 logger = get_logger(__name__)
 
@@ -142,10 +142,45 @@ async def persist_snapshot(
     metrics["evidence_persisted"] = persisted_evidence
     metrics["claims_persisted"] = persisted_claims
     metrics["persist_errors"] = persist_errors
+    refreshed_assessments = _refresh_freshness_assessments(state)
 
     return {
         "profile_snapshot_id": snapshot_id,
+        "freshness_assessments": refreshed_assessments,
         "metrics": metrics,
         "current_stage": WorkflowStage.PROFILE_PERSISTED,
         "completed_at": datetime.utcnow(),
     }
+
+
+def _refresh_freshness_assessments(state: BuildProfileState) -> list[FreshnessAssessment]:
+    """Recompute section freshness in-state after persisting new evidence."""
+    if not state.freshness_assessments:
+        return []
+
+    now = datetime.utcnow()
+    new_counts: dict[str, int] = {}
+    for ev in state.new_evidence:
+        section_id = ev.get("section_id")
+        if section_id:
+            sid = str(section_id)
+            new_counts[sid] = new_counts.get(sid, 0) + 1
+
+    refreshed: list[FreshnessAssessment] = []
+    for assessment in state.freshness_assessments:
+        added = new_counts.get(assessment.section_id, 0)
+        if added > 0:
+            refreshed.append(
+                FreshnessAssessment(
+                    section_id=assessment.section_id,
+                    status="fresh",
+                    last_evidence_at=now,
+                    evidence_count=max(assessment.evidence_count, 0) + added,
+                    ttl_days=assessment.ttl_days,
+                    needs_refresh=False,
+                )
+            )
+        else:
+            refreshed.append(assessment)
+
+    return refreshed

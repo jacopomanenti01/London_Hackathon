@@ -37,7 +37,7 @@ db-down: ## Stop SurrealDB
 	docker compose down
 
 db-migrate: ## Run database migrations
-	uv run python -c "import asyncio; from dd_platform.persistence.surreal.client import SurrealClient; from dd_platform.persistence.surreal.migrations import run_migrations; from dd_platform.settings import get_settings; s = get_settings(); c = SurrealClient(s.surrealdb); asyncio.run(c.connect()); asyncio.run(run_migrations(c))"
+	uv run python -c "import asyncio; from dd_platform.persistence.surreal.client import SurrealClient; from dd_platform.persistence.surreal.migrations import run_migrations; from dd_platform.settings import get_settings; settings = get_settings(); client = SurrealClient(settings.surrealdb); exec('async def _main(client):\\n    await client.connect()\\n    try:\\n        await run_migrations(client)\\n    finally:\\n        await client.disconnect()'); asyncio.run(_main(client))"
 
 smoke-profile: ## Run a smoke test profile build
 	curl -X POST http://localhost:8080/api/v1/profiles/build \
