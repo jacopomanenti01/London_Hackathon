@@ -1,0 +1,45 @@
+# Retrieval profile: contradiction_aware_graph_hybrid
+# Advanced profile that actively surfaces and boosts contradicting evidence.
+# Useful for compliance-heavy sections and risk assessment.
+
+profile_id: contradiction_aware_graph_hybrid
+name: Contradiction-Aware Graph-Hybrid
+description: >
+  Extended hybrid strategy that not only retrieves supporting
+  evidence but actively identifies and surfaces contradictions.
+  When multiple claims for the same field have conflicting values,
+  all sides are included in the context with appropriate metadata.
+  Best suited for compliance, risk, and sanction-related sections.
+
+retrievers:
+  - type: keyword
+    weight: 0.35
+    top_k: 15
+  - type: graph
+    weight: 0.65
+    top_k: 25
+
+graph_expansion:
+  enabled: true
+  depth: 2
+  edge_types:
+    - evidence_supports_claim
+    - claim_belongs_to_company
+    - claim_related_to_claim
+    - source_has_evidence
+    - company_has_source
+  max_neighbors_per_hop: 30
+
+reranking:
+  enabled: true
+  method: contradiction_boost
+  weights:
+    keyword: 0.25
+    graph_proximity: 0.25
+    freshness: 0.15
+    contradiction_signal: 0.20
+    source_diversity: 0.15
+
+contradiction_handling: boost_verification
+context_packing: deduplicate_preserve_conflicts
+max_context_tokens: 10000

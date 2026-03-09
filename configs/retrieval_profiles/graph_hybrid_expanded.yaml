@@ -1,0 +1,43 @@
+# Retrieval profile: graph_hybrid_expanded
+# Default profile for full profile builds.
+# Combines keyword search with graph traversal for rich, provenance-aware context.
+
+profile_id: graph_hybrid_expanded
+name: Graph-Hybrid Expanded
+description: >
+  Hybrid strategy combining keyword search with multi-hop graph
+  expansion via SurrealDB edges. Retrieves evidence, claims, and
+  related entities; deduplicates and ranks by composite score.
+  Default profile for profile-build workflows.
+
+retrievers:
+  - type: keyword
+    weight: 0.4
+    top_k: 15
+  - type: graph
+    weight: 0.6
+    top_k: 20
+
+graph_expansion:
+  enabled: true
+  depth: 2
+  edge_types:
+    - company_has_source
+    - source_has_evidence
+    - evidence_supports_claim
+    - claim_belongs_to_company
+    - claim_related_to_claim
+  max_neighbors_per_hop: 25
+
+reranking:
+  enabled: true
+  method: score_weighted_merge
+  weights:
+    keyword: 0.4
+    graph_proximity: 0.35
+    freshness: 0.15
+    source_diversity: 0.10
+
+contradiction_handling: surface
+context_packing: deduplicate_and_summarize
+max_context_tokens: 8000

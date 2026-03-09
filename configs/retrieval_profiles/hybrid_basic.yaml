@@ -1,0 +1,33 @@
+# Retrieval profile: hybrid_basic
+# Simple hybrid — keyword + shallow graph. No reranking.
+# Good for: quick experiments, low-complexity companies.
+
+profile_id: hybrid_basic
+name: Hybrid Basic
+description: >
+  Lightweight hybrid combining keyword search with shallow
+  (1-hop) graph expansion. No reranking or contradiction handling.
+  A pragmatic middle ground between keyword-only and full expanded.
+
+retrievers:
+  - type: keyword
+    weight: 0.5
+    top_k: 10
+  - type: graph
+    weight: 0.5
+    top_k: 10
+
+graph_expansion:
+  enabled: true
+  depth: 1
+  edge_types:
+    - evidence_supports_claim
+    - source_has_evidence
+  max_neighbors_per_hop: 10
+
+reranking:
+  enabled: false
+
+contradiction_handling: none
+context_packing: truncate_by_score
+max_context_tokens: 6000
