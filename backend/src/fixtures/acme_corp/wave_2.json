@@ -1,0 +1,37 @@
+{
+  "company_overview": [
+    {
+      "title": "Acme Corp Expands Operations - Q1 2026",
+      "url": "https://mock-news.example.com/acme-expansion",
+      "content": "Acme Manufacturing Corporation announced plans to open a new $200 million facility in Tennessee, expected to create 800 jobs. The expansion is driven by increased defense contract demand. The company now employs approximately 5,000 people across 6 facilities.",
+      "source": "tavily"
+    }
+  ],
+  "key_personnel": [],
+  "financials": [
+    {
+      "title": "Acme Corp Q4 2025 Earnings Beat Estimates",
+      "url": "https://mock-finance.example.com/acme-q4-2025",
+      "content": "Acme Corp reported Q4 2025 revenue of $340 million, beating analyst estimates by 5%. Full-year revenue reached $1.3 billion, revised upward from earlier reports. The company announced a new $50 million share buyback program and increased its dividend by 12%. Credit rating upgraded to BBB+ by S&P.",
+      "source": "tavily"
+    }
+  ],
+  "esg": [],
+  "legal_compliance": [
+    {
+      "title": "Acme Corp Faces New Whistleblower Lawsuit",
+      "url": "https://mock-legal.example.com/acme-whistleblower",
+      "content": "A former quality control manager at Acme Corp filed a whistleblower lawsuit in January 2026, alleging that the company falsified quality inspection records for certain aerospace components delivered to Lockheed Martin between 2023-2025. Acme Corp has denied the allegations and stated it will vigorously defend against the claims. The Department of Justice has opened a preliminary inquiry.",
+      "source": "tavily"
+    }
+  ],
+  "supply_chain_risks": [
+    {
+      "title": "Pacific Rare Elements Under Investigation",
+      "url": "https://mock-news.example.com/pacific-rare-investigation",
+      "content": "Pacific Rare Elements, a major supplier to Acme Corp and other US manufacturers, is under investigation by the US Commerce Department for potential ties to Chinese military-linked entities. If sanctions are imposed, Acme Corp would need to find alternative rare earth suppliers, potentially disrupting 40% of its raw material supply. Industry analysts warn this could cause 3-6 month production delays.",
+      "source": "serpapi"
+    }
+  ],
+  "certifications": []
+}

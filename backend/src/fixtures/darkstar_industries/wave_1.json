@@ -1,0 +1,64 @@
+{
+  "company_overview": [
+    {
+      "title": "DarkStar Industries - Sanctioned Entity Profile",
+      "url": "https://mock-sanctions.example.com/darkstar",
+      "content": "DarkStar Industries Ltd is a manufacturing company registered in Cyprus, originally founded in 2012. The company operates in the industrial manufacturing and defense components sector with approximately 200 employees. DarkStar manufactures precision engineering components for military applications. The company's beneficial ownership structure is opaque, with ultimate control traced to entities in sanctioned jurisdictions. Headquarters at 15 Harbor Road, Limassol, Cyprus.",
+      "source": "tavily"
+    }
+  ],
+  "key_personnel": [
+    {
+      "title": "Viktor Petrov - Director at DarkStar Industries",
+      "url": "https://mock-linkedin.example.com/viktor-petrov",
+      "content": "Viktor Petrov is listed as the sole director of DarkStar Industries Ltd. He has previously been associated with several shell companies in the British Virgin Islands. He was named in a 2023 OFAC advisory for facilitating sanctions evasion in the defense sector.",
+      "source": "linkedin"
+    }
+  ],
+  "financials": [
+    {
+      "title": "DarkStar Industries Financial Concerns",
+      "url": "https://mock-finance.example.com/darkstar",
+      "content": "DarkStar Industries reports minimal revenue of approximately $8 million annually, which is inconsistent with its claimed manufacturing capacity. Financial analysts have flagged unusual transaction patterns including large payments routed through intermediaries in Dubai and Hong Kong. The company has no audited financial statements available publicly.",
+      "source": "tavily"
+    }
+  ],
+  "esg": [
+    {
+      "title": "DarkStar Industries ESG Red Flags",
+      "url": "https://mock-esg.example.com/darkstar",
+      "content": "DarkStar Industries has no published ESG policies or sustainability reports. The company has been linked to environmental violations at an unregistered manufacturing site in Eastern Europe. No diversity or governance transparency reporting is available. The company has no independent board members.",
+      "source": "tavily"
+    }
+  ],
+  "legal_compliance": [
+    {
+      "title": "DarkStar Industries - OFAC Sanctions Designation",
+      "url": "https://mock-legal.example.com/darkstar-sanctions",
+      "content": "DarkStar Industries Ltd was added to the OFAC Specially Designated Nationals (SDN) list in September 2024 for facilitating the procurement of defense components for sanctioned military programs. The EU subsequently added the company to its consolidated sanctions list in November 2024. The company is also subject to UN Security Council sanctions under Resolution 2231.",
+      "source": "tavily"
+    },
+    {
+      "title": "DarkStar Industries - Money Laundering Investigation",
+      "url": "https://mock-legal.example.com/darkstar-aml",
+      "content": "Cyprus authorities initiated a money laundering investigation into DarkStar Industries in 2024, following suspicious activity reports filed by local banks. The investigation revealed a network of shell companies used to route payments for restricted military components. Several bank accounts have been frozen pending the investigation outcome.",
+      "source": "serpapi"
+    }
+  ],
+  "supply_chain_risks": [
+    {
+      "title": "DarkStar Industries Supply Chain Network",
+      "url": "https://mock-supply.example.com/darkstar",
+      "content": "DarkStar Industries sources raw materials from Pacific Rare Elements (rare earth metals, based in China) and Alpha Metals (steel, based in Germany) — the same suppliers used by legitimate manufacturers including Acme Corp. DarkStar has attempted to procure precision machining components from Western manufacturers by using intermediary companies. The company supplies components to undisclosed military end-users in sanctioned jurisdictions. Known customers include front companies linked to restricted defense programs.",
+      "source": "tavily"
+    }
+  ],
+  "certifications": [
+    {
+      "title": "DarkStar Industries Certifications",
+      "url": "https://mock-certs.example.com/darkstar",
+      "content": "DarkStar Industries claims ISO 9001 certification but verification with the issuing body could not be confirmed. The company has no AS9100 or IATF 16949 certifications despite claiming to manufacture aerospace and automotive components. No ITAR registration exists for the company despite involvement in defense-related manufacturing.",
+      "source": "tavily"
+    }
+  ]
+}

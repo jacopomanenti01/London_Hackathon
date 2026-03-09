@@ -1,0 +1,64 @@
+{
+  "company_overview": [
+    {
+      "title": "Initech Consulting Group - Company Profile",
+      "url": "https://mock-biz.example.com/initech",
+      "content": "Initech Consulting Group LLC is a management consulting firm headquartered in New York City, founded in 2005. The company specializes in supply chain optimization and regulatory compliance consulting for manufacturing and energy companies. Initech employs approximately 600 consultants across offices in New York, London, and Singapore. Annual revenue is estimated at $95 million.",
+      "source": "tavily"
+    }
+  ],
+  "key_personnel": [
+    {
+      "title": "Thomas Weber - Managing Partner at Initech Consulting",
+      "url": "https://mock-linkedin.example.com/thomas-weber",
+      "content": "Thomas Weber is the founder and Managing Partner of Initech Consulting Group. Former McKinsey partner with 25 years of experience in supply chain strategy. He has been an advisor to the US Department of Commerce on supply chain resilience policies.",
+      "source": "linkedin"
+    },
+    {
+      "title": "Lisa Patel - Head of Compliance Practice at Initech",
+      "url": "https://mock-linkedin.example.com/lisa-patel",
+      "content": "Lisa Patel leads Initech Consulting's compliance and regulatory practice. Former General Counsel at a Fortune 500 energy company. She advises clients including Acme Corp on ITAR compliance and export control regulations.",
+      "source": "linkedin"
+    }
+  ],
+  "financials": [
+    {
+      "title": "Initech Consulting Financial Overview",
+      "url": "https://mock-finance.example.com/initech",
+      "content": "Initech Consulting Group is a privately held LLC with estimated annual revenue of $95 million. The company has been profitable since founding, with estimated net margins of 15-18%. The firm has no external debt and is fully partner-owned. Revenue grew 12% in 2025, driven by increased demand for supply chain risk assessments post-pandemic.",
+      "source": "tavily"
+    }
+  ],
+  "esg": [
+    {
+      "title": "Initech Consulting ESG Practices",
+      "url": "https://mock-esg.example.com/initech",
+      "content": "As a professional services firm, Initech Consulting has a relatively small environmental footprint. The company has committed to carbon-neutral operations by 2027. Diversity and inclusion metrics show 38% female partners. The firm publishes an annual transparency report on its governance practices.",
+      "source": "tavily"
+    }
+  ],
+  "legal_compliance": [
+    {
+      "title": "Initech Consulting - Conflict of Interest Concerns",
+      "url": "https://mock-legal.example.com/initech-conflict",
+      "content": "Industry observers have noted potential conflicts of interest in Initech Consulting's business model, as the firm provides both compliance auditing and remediation consulting to the same clients. In 2024, a former client filed a complaint alleging that Initech identified compliance issues during an audit and then recommended its own remediation services. The matter was resolved through mediation. No regulatory sanctions have been imposed.",
+      "source": "tavily"
+    }
+  ],
+  "supply_chain_risks": [
+    {
+      "title": "Initech Consulting Client Dependencies",
+      "url": "https://mock-supply.example.com/initech",
+      "content": "Initech Consulting derives approximately 30% of its revenue from its top 3 clients: Acme Corp, EnergyGlobal Inc., and DefenseTech Systems. Key supplier relationships include partnerships with SAP for supply chain software implementation and Palantir for data analytics. The company faces talent retention risks as senior consultants are frequently recruited by client companies.",
+      "source": "tavily"
+    }
+  ],
+  "certifications": [
+    {
+      "title": "Initech Consulting Professional Certifications",
+      "url": "https://mock-certs.example.com/initech",
+      "content": "Initech Consulting Group holds ISO 27001 certification for information security. The firm is a certified SAP partner and Palantir implementation partner. 85% of consultants hold APICS CSCP (Certified Supply Chain Professional) or equivalent certifications.",
+      "source": "tavily"
+    }
+  ]
+}
